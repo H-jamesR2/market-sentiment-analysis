@@ -23,6 +23,20 @@
             <version>20231013</version>
         </dependency>
 
+        <!-- Spring Boot Starter Parent (for managing versions) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <version>3.4.2</version> <!-- Use the version appropriate for your project -->
+        </dependency>
+
+        <!-- Spring Boot Starter Web (for web-related functionality) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>3.4.2</version> <!-- Adjust the version if necessary -->
+        </dependency>
+
         <!-- Spring Context for Scheduling -->
         <dependency>
             <groupId>org.springframework</groupId>
