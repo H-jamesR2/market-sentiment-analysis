@@ -1,0 +1,3 @@
+.idea/
+Z_notes/
+**/application.properties   # Ignores application.properties in any directory
