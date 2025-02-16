@@ -15,6 +15,27 @@
             <version>20231013</version>
         </dependency>
 
+        <!-- Spring Context for Scheduling -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.1.14</version> <!-- Use the version appropriate for your project -->
+        </dependency>
+
+        <!-- SLF4J API for logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version> <!-- Use the version appropriate for your project -->
+        </dependency>
+
+        <!-- SLF4J Simple (or another SLF4J binding) for implementation -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.36</version> <!-- Use the version appropriate for your project -->
+        </dependency>
+
         <!-- Example of another dependency (JUnit) for testing -->
         <dependency>
             <groupId>junit</groupId>
