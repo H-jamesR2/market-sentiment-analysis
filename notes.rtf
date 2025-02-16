@@ -1,0 +1,55 @@
+First [Architecture]:
+
+market-sentiment-analysis/
+│── backend/                     # Spring Boot Backend (Java)
+│   ├── src/main/java/com/example/marketanalysis/
+│   │   ├── config/              # Configurations (Kafka, Cassandra, etc.)
+│   │   ├── controller/          # REST API Controllers
+│   │   ├── model/               # Data Models (Cassandra Entities)
+│   │   ├── repository/          # DAO Layer (Cassandra Repositories)
+│   │   ├── service/             # Business Logic (Kafka Producers, Spark Job Triggers)
+│   │   ├── util/                # Utility Functions (Data Parsing, Common Helpers)
+│   │   ├── MarketAnalysisApplication.java  # Main Entry Point
+│   ├── pom.xml                   # Maven Dependencies
+│   ├── Dockerfile                 # Containerization
+│
+│── ingestion/                     # Kafka Producers (Java)
+│   ├── src/main/java/com/example/ingestion/
+│   │   ├── TwitterProducer.java  # Twitter API to Kafka
+│   │   ├── RedditProducer.java   # Reddit API to Kafka
+│   │   ├── NewsProducer.java     # Yahoo Finance Scraper
+│   │   ├── SECProducer.java      # SEC Filings Ingestion
+│   ├── pom.xml                    # Maven Dependencies
+│
+│── processing/                     # Spark Streaming & Sentiment Analysis
+│   ├── src/main/java/com/example/processing/
+│   │   ├── SparkSentimentProcessor.java  # Spark Kafka Consumer
+│   │   ├── SentimentAnalyzer.java       # NLP Model (Minimal ML Dependency)
+│   ├── pom.xml                          # Dependencies (Spark, NLP)
+│
+│── cassandra/                     # NoSQL Database Setup
+│   ├── schema.cql                  # Cassandra Table Definitions
+│
+│── dashboard/                      # Optional (React Frontend for Visualization)
+│   ├── src/                         # React Code
+│   ├── package.json                 # Frontend Dependencies
+│
+│── docker-compose.yml               # Infrastructure Setup (Kafka, Cassandra, Spark)
+│── README.md                         # Documentation
+
+Next, [Ingestion Services]
+    ingestion/
+    │── src/main/java/com/example/ingestion/
+    │   ├── reddit/
+    │   │   ├── RedditProducer.java          # Main Kafka producer
+    │   │   ├── RedditClient.java            # Handles API requests
+    │   │   ├── RedditParser.java            # Extracts relevant fields
+    │   │   ├── RedditConfig.java            # Config loader
+    │   ├── kafka/
+    │   │   ├── KafkaProducerService.java    # Generic Kafka producer logic
+    │   ├── util/
+    │   │   ├── JsonUtil.java                # Lightweight JSON helper
+    │   ├── Main.java                         # Entry point
+    │── resources/
+    │   ├── application.properties           # Config (subreddits, Kafka settings)
+    │── pom.xml                               # Dependencies (minimal)
