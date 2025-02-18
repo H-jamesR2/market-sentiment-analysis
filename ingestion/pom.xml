@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
-    <artifactId>my-project</artifactId>
+    <artifactId>msa-ingestion</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <repositories>
@@ -15,6 +15,11 @@
         </repository>
     </repositories>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version>
+    </parent>
 
     <dependencies>
         <dependency>
@@ -24,53 +29,93 @@
         </dependency>
 
         <!-- Spring Boot Starter Parent (for managing versions) -->
+        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <version>3.4.2</version> <!-- Use the version appropriate for your project -->
-        </dependency>
+            <version>3.2.4</version>
+        </dependency> -->
 
         <!-- Spring Boot Starter Web (for web-related functionality) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>3.4.2</version> <!-- Adjust the version if necessary -->
+            <!--
+                <version>3.4.2</version>
+            -->
         </dependency>
 
         <!-- Spring Context for Scheduling -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>6.1.14</version> <!-- Use the version appropriate for your project -->
+            <!--
+                <version>6.1.14</version>
+            -->
         </dependency>
 
         <!-- Spring Web dependency for RestTemplate -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>6.1.12</version>
+            <!--
+                <version>6.1.12</version>
+            -->
         </dependency>
 
         <!-- Spring Kafka dependency -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
-            <version>3.2.4</version>
+            <!--
+                <version>3.2.4</version>
+            -->
         </dependency>
 
         <!-- SLF4J API for logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version> <!-- Use the version appropriate for your project -->
+            <version>2.0.9</version> <!-- Use the version appropriate for your project -->
         </dependency>
 
         <!-- SLF4J Simple (or another SLF4J binding) for implementation -->
+        <!--<dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.36</version>
+        </dependency> -->
+        <!--
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.36</version> <!-- Use the version appropriate for your project -->
+            <version>1.7.36</version>
+            <scope>provided</scope>
+        </dependency> -->
+
+        <!-- Logback Classic -->
+        <!--
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.14</version>
         </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.4.14</version>
+        </dependency>
+        -->
+
+
+        <!-- Spring Boot Starter Logging -->
+        <!--
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+            <version>3.2.4</version>
+        </dependency> -->
 
         <!-- Example of another dependency (JUnit) for testing -->
         <dependency>
@@ -80,4 +125,30 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!--
+    <build>  <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <version>3.2.4</version>  <executions>
+            <execution>
+                <goals>
+                    <goal>repackage</goal>
+                </goals>
+            </execution>
+        </executions>
+        </plugin>
+    </plugins>
+    </build> -->
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
