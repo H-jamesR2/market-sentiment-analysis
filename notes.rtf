@@ -53,3 +53,101 @@ Next, [Ingestion Services]
     │── resources/
     │   ├── application.properties           # Config (subreddits, Kafka settings)
     │── pom.xml                               # Dependencies (minimal)
+
+KAFKA Topics:
+    reddit_posts
+
+
+==================
+[Terminal instance 1]
+Setup to run kafka before running ingestion service [@ root directory]:
+    docker system prune -a --volumes -f
+    docker system df
+
+    docker-compose up -d
+    docker ps | grep kafka #check if running
+    docker exec -it market-sentiment-analysis-kafka-1 kafka-topics.sh --bootstrap-server localhost:9092 --list
+    docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server \
+    localhost:9092 --topic reddit_posts --from-beginning
+
+    docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic reddit_posts --from-beginning
+
+    docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic __consumer_offsets
+
+
+==================
+[Terminal instance 2]
+When testing code [running the following commands]:
+    mvn clean install
+    mvn spring-boot:run -X
+    -> need to change to directory first [ingestion, backend, etc..]
+
+Cleaning up maven_dependencies:
+    mvn clean
+    mvn dependency:purge-local-repository
+    mvn dependency:tree
+
+
+=========
+For KAFKA:
+Since Kafka setup is running inside Docker,
+    shouldn’t need to install Kafka manually.
+The issue is that `kafka-topics.sh` and `kafka-console-consumer.sh`
+    aren’t available on your **host machine**—they exist inside the Kafka container.
+
+### **1. List Running Kafka Containers**
+Run this to check if Kafka is running in Docker:
+```bash
+docker ps --filter "name=kafka"
+```
+If nothing shows up, your Kafka container isn’t running.
+
+---
+
+### **2. Get Kafka Container Name**
+If Kafka **is** running, find its container name:
+```bash
+docker ps --format "{{.Names}}"
+```
+Look for something like `kafka_broker_1` or whatever name you gave it.
+
+---
+
+### **3. Run Kafka CLI Inside the Container**
+Once you have the container name (let’s say it’s `kafka_broker_1`),
+[
+market-sentiment-analysis-kafka-1
+market-sentiment-analysis-zookeeper-1
+]
+exec into it:
+```bash
+docker exec -it kafka_broker_1 bash
+docker exec -it market-sentiment-analysis-kafka-1 bash
+```
+Then, inside the container, run:
+```bash
+kafka-topics.sh --bootstrap-server localhost:9092 --list
+```
+or
+```bash
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic <your_topic_name> --from-beginning
+```
+
+---
+
+### **4. Alternative: Run Commands Without Entering the Container**
+Instead of entering the container, you can run commands like this:
+```bash
+docker exec -it kafka_broker_1 kafka-topics.sh --bootstrap-server localhost:9092 --list
+```
+or
+```bash
+docker exec -it kafka_broker_1 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic <your_topic_name> --from-beginning
+```
+
+---
+
+### **Next Steps**
+- If no topics show up, your producer might not be sending data correctly.
+- If the container isn’t running, we might need to restart Kafka using `docker-compose`.
+
