@@ -4,3 +4,4 @@ Z_notes/
 **/.DS_Store
 **/target/
 .git.bak/
+**/src/main/resources/application.properties
