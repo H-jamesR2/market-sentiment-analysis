@@ -1,6 +1,7 @@
-package com.example.ingestion.reddit;
+package com.example.ingestion.parsers;
 
 import com.example.ingestion.models.RedditPost;
+import com.example.ingestion.models.RedditComment;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -13,33 +14,51 @@ import java.util.List;
 public class RedditParser {
     private static final Logger logger = LoggerFactory.getLogger(RedditParser.class);
 
-    public List<RedditPost> parseRedditResponse(String jsonResponse) {
+    public List<RedditPost> parseRedditPosts(String jsonResponse) {
         List<RedditPost> posts = new ArrayList<>();
-
         try {
             JSONObject json = new JSONObject(jsonResponse);
             JSONArray children = json.getJSONObject("data").getJSONArray("children");
 
             for (int i = 0; i < children.length(); i++) {
                 JSONObject postData = children.getJSONObject(i).getJSONObject("data");
-
-                String id = postData.getString("id");
-                String content = postData.optString("selftext", ""); // Some posts have no text
-                long timestamp = postData.getLong("created_utc") * 1000; // Convert to milliseconds
-                String title = postData.getString("title");
-                String url = postData.optString("url", ""); // Some posts may not have a URL
-                int upvotes = postData.optInt("ups", 0); // Default to 0 if missing
-                String subreddit = postData.getString("subreddit");
-
-                RedditPost redditPost = new RedditPost(id, content, timestamp, title, url, upvotes, subreddit);
+                RedditPost redditPost = new RedditPost(
+                        postData.getString("id"),
+                        postData.optString("selftext", ""),
+                        postData.getLong("created_utc") * 1000,
+                        postData.getString("title"),
+                        postData.optString("url", ""),
+                        postData.optInt("ups", 0),
+                        postData.getString("subreddit")
+                );
                 posts.add(redditPost);
             }
         } catch (Exception e) {
-            logger.error("Error parsing Reddit API response", e);
+            logger.error("Error parsing Reddit posts", e);
         }
-
         return posts;
     }
+
+    public List<RedditComment> parseRedditComments(String jsonResponse) {
+        List<RedditComment> comments = new ArrayList<>();
+        try {
+            JSONObject json = new JSONObject(jsonResponse);
+            JSONArray children = json.getJSONObject("data").getJSONArray("children");
+
+            for (int i = 0; i < children.length(); i++) {
+                JSONObject commentData = children.getJSONObject(i).getJSONObject("data");
+                RedditComment redditComment = new RedditComment(
+                        commentData.getString("id"),
+                        commentData.getString("body"),
+                        commentData.getLong("created_utc") * 1000,
+                        commentData.getString("parent_id"),
+                        commentData.getString("subreddit")
+                );
+                comments.add(redditComment);
+            }
+        } catch (Exception e) {
+            logger.error("Error parsing Reddit comments", e);
+        }
+        return comments;
+    }
 }
-
-
