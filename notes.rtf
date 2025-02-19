@@ -151,3 +151,67 @@ docker exec -it kafka_broker_1 kafka-console-consumer.sh --bootstrap-server loca
 - If no topics show up, your producer might not be sending data correctly.
 - If the container isn’t running, we might need to restart Kafka using `docker-compose`.
 
+=========================
+
+For handling duplicate messages,
+need to define a strategy based on how we treat updates.
+
+Some possible approaches:
+    1. **Deduplication at the Producer Level**
+       - Store the latest known state of posts (e.g., in an in-memory cache or external store like Redis).
+       - Before sending a new message, check if it differs significantly from the last stored version.
+       - If only upvotes change, decide whether to send an update or ignore it.
+
+    2. **Deduplication at the Consumer Level**
+       - Let Kafka consume all messages but introduce logic in the consumer to discard updates with minimal changes.
+       - Store seen messages in a cache or database and compare before processing.
+
+    3. **Kafka Compaction**
+       - Kafka has a log compaction feature where only the most recent message per key (e.g., `post_id`) is retained.
+       - Useful if you want to keep only the latest version of a post in Kafka.
+
+For `RedditComment`, it’ll have similar challenges
+    (edited comments, changing upvotes, deleted comments).
+    Likely need logic to determine whether a comment update is worth processing.
+
+Before we move to `RedditComment`,
+    let's clean up `DataFetchScheduler` and `KafkaProducerService`.
+
+
+=====================
+If we factor in market sentiment, we might need to:
+- Assign **different weights** to **posts vs. comments**
+    (e.g., high-upvote comments might be more valuable than low-engagement posts).
+- Decide **how often to track upvotes** (do we care about every change or just major shifts?).
+- Consider **sentiment analysis on edits** (does the sentiment of a post/comment change over time?).
+
+For now,
+- refactor `DataFetchScheduler` and `KafkaProducerService`.
+
+---
+
+### **Refactoring Goals**
+1. **Make `DataFetchScheduler` more extensible**
+   - Ensure it can fetch from multiple data sources (not just Reddit).
+   - Allow scheduling logic to be configurable.
+
+2. **Improve `KafkaProducerService`**
+   - Decouple it from being Reddit-specific.
+   - Improve reusability and logging.
+
+---
+
+### **Plan for `DataFetchScheduler`**
+- Introduce a **`DataSourceFetcher` interface** that different sources (Reddit, Twitter, etc.) can implement.
+- Modify `DataFetchScheduler` to **loop through multiple fetchers** instead of hardcoding Reddit logic.
+- Move scheduling configuration (e.g., fetch interval) to `application.properties`.
+
+---
+
+### **Plan for `KafkaProducerService`**
+- Introduce a **generic `produceMessage(topic, key, value)` method** instead of tying it to Reddit data.
+- Improve logging to track when messages are dropped (e.g., due to deduplication logic).
+- Make it easier to plug in **message transformation or enrichment** if needed later.
+
+---
+
