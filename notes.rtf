@@ -71,6 +71,7 @@ Setup to run kafka before running ingestion service [@ root directory]:
     localhost:9092 --topic reddit_posts --from-beginning
 
     docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic reddit_posts --from-beginning
+    docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic reddit_comments --from-beginning
 
     docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic __consumer_offsets
 
@@ -214,4 +215,71 @@ For now,
 - Make it easier to plug in **message transformation or enrichment** if needed later.
 
 ---
+
+======================
+### **📌 Where Should Redis Deduplication Go? (Ingestion vs. Backend)**
+
+Since **Redis Deduplication** is primarily used for **filtering redundant data before pushing to Kafka**,
+    it makes more sense to **keep it inside `ingestion/`** rather than `backend/`.
+
+### **🔍 Considerations**
+| **Factor** | **Ingestion** ✅ | **Backend** ❌ |
+|------------|----------------|---------------|
+| **Purpose** | Ingestion filters and pre-processes data before Kafka. | Backend handles analytics, queries, and market insights. |
+| **Data Flow** | Deduplication happens **before Kafka** to avoid sending redundant messages. | Backend consumes from Kafka and does not control ingestion. |
+| **Redis Use Case** | Used for short-term caching of processed posts/comments to prevent duplicate ingestion. | Typically used for analytics caching, user sessions, or recommendation storage. |
+| **Scalability** | Keeping deduplication in ingestion **reduces load on Kafka & backend**. | If done in backend, duplicate messages would already be processed and stored, leading to inefficiencies. |
+
+---
+
+### **✅ Recommendation: Keep Deduplication in `ingestion/`**
+- **Move `DeduplicationService` to `ingestion/services/`** (already structured for this).
+- **Future-proofing**: If backend needs deduplication for **query caching**
+    (e.g., preventing duplicate analysis runs), it can have **a separate Redis instance or namespace**.
+- **Backend remains focused on analytics and querying**,
+    while ingestion handles **data quality before sending to Kafka**.
+
+---
+
+### **🛠 Updated Repository Structure**
+```
+ingestion [my-project]/
+│── src/main/java/com.example.ingestion/
+│   ├── config/
+│   ├── fetcher/
+│   ├── messaging/
+│   ├── models/
+│   ├── parsers/
+│   ├── producers/
+│   ├── scheduler/
+│   ├── services/
+│   │   ├── DeduplicationService.java  <-- (🔹 Add here)
+│   ├── utils/
+│   ├── Main.java
+│── resources/
+│     ├── application.properties
+│── pom.xml
+
+backend/
+│── src/main/java/com.example.marketanalysis/
+│   ├── config/
+│   ├── controller/
+│   ├── model/
+│   ├── repository/
+│   ├── service/
+│   ├── util/
+│   ├── MarketAnalysisApplication.java
+│── Dockerfile
+│── pom.xml
+```
+
+---
+### **❓ Do We Even Need the `backend/` Folder?**
+We might not need `backend/` at all **unless**:
+- We plan to **build an API** for querying the processed market sentiment data.
+- We need **data visualization, user interaction, or REST endpoints**.
+- We want to **store aggregated insights in a database** for external access.
+
+If our goal is **just Kafka → Spark → Market Sentiment Analysis**,
+then the ingestion pipeline **alone may be sufficient** for now.
 
