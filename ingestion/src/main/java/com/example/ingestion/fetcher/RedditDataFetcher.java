@@ -25,7 +25,7 @@ WSB_top50 / week @ query. has text:
 public class RedditDataFetcher implements DataFetcher {
     private static final Logger logger = LoggerFactory.getLogger(RedditDataFetcher.class);
     //private static final String REDDIT_API_URL = "https://oauth.reddit.com/r/popular/top.json?limit=10";
-    private static final String REDDIT_POSTS_URL = "https://oauth.reddit.com/r/wallstreetbets/top.json?t=week&limit=50";
+    private static final String REDDIT_POSTS_URL = "https://oauth.reddit.com/r/wallstreetbets/top.json?t=week&limit=25";
     private static final String REDDIT_COMMENTS_URL_TEMPLATE = "https://oauth.reddit.com/r/wallstreetbets/comments/%s.json?limit=20";
 
 
@@ -60,6 +60,7 @@ public class RedditDataFetcher implements DataFetcher {
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(REDDIT_POSTS_URL, HttpMethod.GET, entity, String.class);
 
+            //logger.debug("API response body: {}", response);
             if (response.getBody() != null) {
                 List<RedditPost> posts = redditParser.parseRedditPosts(response.getBody());
                 for (RedditPost post : posts) {
@@ -78,6 +79,7 @@ public class RedditDataFetcher implements DataFetcher {
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
+            //logger.debug("Fetched Reddit comments response: {}", response);
             if (response.getBody() != null) {
                 List<RedditComment> comments = redditParser.parseRedditComments(response.getBody());
                 for (RedditComment comment : comments) {
