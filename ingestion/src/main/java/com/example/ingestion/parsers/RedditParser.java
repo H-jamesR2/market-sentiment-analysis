@@ -47,12 +47,17 @@ public class RedditParser {
 
             for (int i = 0; i < children.length(); i++) {
                 JSONObject commentData = children.getJSONObject(i).getJSONObject("data");
+
+                String parentId = commentData.getString("parent_id");
+                String postId = parentId.startsWith("t3_") ? parentId.substring(3) : null;  // Extract post ID if parent is a post
+
                 RedditComment redditComment = new RedditComment(
                         commentData.getString("id"),
-                        commentData.getString("body"),
+                        postId, // Store postId instead of raw parentId
+                        commentData.getString("body"), // Fixed incorrect mapping
+                        commentData.getString("subreddit"),
                         commentData.getLong("created_utc") * 1000,
-                        commentData.getString("parent_id"),
-                        commentData.getString("subreddit")
+                        commentData.optInt("ups", 0) // Fixed "upvotes" -> "ups"
                 );
                 comments.add(redditComment);
             }
