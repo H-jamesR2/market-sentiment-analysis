@@ -66,6 +66,9 @@ Setup to run kafka before running ingestion service [@ root directory]:
 
     docker-compose up -d
     docker ps | grep kafka #check if running
+    docker run --name redis-dedup -p 6379:6379 -d redis
+    docker ps | grep redis
+
     docker exec -it market-sentiment-analysis-kafka-1 kafka-topics.sh --bootstrap-server localhost:9092 --list
     docker exec -it market-sentiment-analysis-kafka-1 kafka-console-consumer.sh --bootstrap-server \
     localhost:9092 --topic reddit_posts --from-beginning
@@ -282,4 +285,79 @@ We might not need `backend/` at all **unless**:
 
 If our goal is **just Kafka → Spark → Market Sentiment Analysis**,
 then the ingestion pipeline **alone may be sufficient** for now.
+
+============================
+---
+
+### **1. Redis TTL Optimization**
+✅ **Agreed with the Dynamic TTL Approach**
+- Adjusting TTL based on subreddit activity makes sense.
+- The **sliding TTL** idea (reset TTL when content is modified) is excellent—it ensures that only actively changing posts stay cached longer.
+
+➡ **Possible Implementation:**
+- Store a **last-updated timestamp** in Redis alongside the content.
+- If a post/comment is modified, extend its TTL dynamically rather than using a fixed value.
+
+---
+
+### **2. Hash-Based Deduplication**
+❌ **Hashing Alone Is Too Blunt**
+- Using only SHA-256/Murmur3 for deduplication is **overly aggressive** and loses granularity.
+- Instead, **storing separate hashes for metadata vs. content** is a better middle ground.
+
+✅ **Storing Compact Representations:**
+- Keeping **only key fields** (title, URL, upvotes, timestamp) reduces Redis storage and speeds up lookups.
+
+🧐 **Bloom Filters?**
+- They can be a quick first filter before hitting Redis, but **false positives could cause Kafka misses.**
+- Better for extremely high-volume data, but may not be necessary here unless we scale Reddit ingestion massively.
+
+---
+
+### **3. Redis Pipelining Enhancements**
+✅ **Pipelining + Multi-Key Ops (MGET/MSET) Is the Way to Go**
+- Instead of fetching/updating **each key separately**, using **multi-key Redis operations** reduces network round trips.
+
+✅ **Local LRU Cache**
+- A small in-memory LRU cache (e.g., Caffeine or Guava) would **reduce Redis queries for very recent duplicates.**
+- Example: If a post/comment was already processed **in the last 10 seconds**, skip checking Redis.
+
+---
+
+### **4. Additional Optimizations**
+✅ **Backpressure & Monitoring**
+- If Redis memory gets too high, dynamically adjust TTLs or **drop low-priority data (older/lower-upvoted posts).**
+- **Redis Streams?**
+  - If we need more stateful deduplication with temporal tracking, **Redis Streams could be worth testing.**
+  - But if we’re just deduplicating posts/comments **without order-dependent processing, Streams might be overkill.**
+
+➡ **Count-Min Sketch?**
+- **Useful for tracking frequency trends,** but not great for strict deduplication.
+- Could help in detecting **fast-rising sentiment trends** if we decide to measure **word frequency in WSB comments.**
+
+---
+
+### **5. Kafka Integration Enhancements**
+✅ **Retries + Circuit Breakers Are a Must**
+- The **LEADER_NOT_AVAILABLE** issue might be transient, but relying on **blind retries is risky.**
+- **Exponential Backoff with Max Retries** should be implemented.
+- Circuit breakers (Hystrix or Resilience4j) could **pause processing** if Kafka is unavailable to avoid overloading Redis.
+
+➡ **Buffering when Kafka is down?**
+- If Kafka goes down, should we **buffer messages temporarily** and resend?
+- If so, **where do we store them?**
+  - In-memory (risk of data loss on restart)
+  - Temporary Redis queue (adds Redis load)
+  - Write to a local file-based queue for durability
+
+---
+
+### **Final Verdict on Claude’s Take:**
+🔥 **Solid insights, great additional considerations.**
+💡 **Next Steps:**
+- **Refine Redis Deduplication** (MGET/MSET, local cache, sliding TTL).
+- **Improve Kafka Fault Handling** (retries, buffering strategy).
+- **Decide on Temporal Tracking Approach** (Redis Streams or alternative).
+
+Let’s start with **optimizing Redis lookups first**, then move on to Kafka failure handling. 🚀
 
