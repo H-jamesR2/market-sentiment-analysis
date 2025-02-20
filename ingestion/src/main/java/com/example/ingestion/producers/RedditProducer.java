@@ -29,7 +29,7 @@ public class RedditProducer {
         while (attempt < maxRetries) {
             try {
                 String jsonPayload = convertPostToJson(post);
-                kafkaProducerService.sendMessage(TOPIC, jsonPayload);
+                kafkaProducerService.sendMessage(TOPIC, post.getId(), jsonPayload); // pass topic, key, payload
                 logger.info("Sent post to Kafka: {}", jsonPayload);
                 return;
             } catch (Exception e) {
@@ -43,6 +43,7 @@ public class RedditProducer {
 
         logger.error("Giving up on sending Reddit post to Kafka after {} attempts", maxRetries);
     }
+
 
     private String convertPostToJson(RedditPost post) {
         try {
