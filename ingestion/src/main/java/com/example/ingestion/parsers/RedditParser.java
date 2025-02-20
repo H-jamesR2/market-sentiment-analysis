@@ -25,11 +25,11 @@ public class RedditParser {
                 RedditPost redditPost = new RedditPost(
                         postData.getString("id"),
                         postData.optString("selftext", ""),
-                        postData.getLong("created_utc") * 1000,
+                        postData.optLong("created_utc", 0) * 1000,
                         postData.getString("title"),
                         postData.optString("url", ""),
                         postData.optInt("ups", 0),
-                        postData.getString("subreddit")
+                        postData.optString("subreddit", "unknown")
                 );
                 posts.add(redditPost);
             }
@@ -42,8 +42,24 @@ public class RedditParser {
     public List<RedditComment> parseRedditComments(String jsonResponse) {
         List<RedditComment> comments = new ArrayList<>();
         try {
-            JSONObject json = new JSONObject(jsonResponse);
-            JSONArray children = json.getJSONObject("data").getJSONArray("children");
+            logger.debug("Raw Reddit comment response: {}", jsonResponse);
+
+            if (jsonResponse == null || jsonResponse.trim().isEmpty()) {
+                logger.error("Received empty or null JSON response for Reddit comments.");
+                return comments; // Handle empty response gracefully
+            }
+
+            // Reddit comments API returns an array; check for it
+            JSONArray jsonArray = new JSONArray(jsonResponse);
+            if (jsonArray.length() < 2) {
+                logger.error("Unexpected Reddit comment response structure: {}", jsonResponse);
+                return comments; // Likely an API issue
+            }
+
+            // The second object in the array contains the comment data
+            JSONObject commentListing = jsonArray.getJSONObject(1);
+            //JSONObject json = new JSONObject(jsonResponse);
+            JSONArray children = commentListing.getJSONObject("data").getJSONArray("children");
 
             for (int i = 0; i < children.length(); i++) {
                 JSONObject commentData = children.getJSONObject(i).getJSONObject("data");
@@ -54,9 +70,9 @@ public class RedditParser {
                 RedditComment redditComment = new RedditComment(
                         commentData.getString("id"),
                         postId, // Store postId instead of raw parentId
-                        commentData.getString("body"), // Fixed incorrect mapping
-                        commentData.getString("subreddit"),
-                        commentData.getLong("created_utc") * 1000,
+                        commentData.optString("body", "[deleted]"), // Handle deleted comments
+                        commentData.optString("subreddit", "unknown"),
+                        commentData.optLong("created_utc", 0) * 1000,
                         commentData.optInt("ups", 0) // Fixed "upvotes" -> "ups"
                 );
                 comments.add(redditComment);
